@@ -1,5 +1,21 @@
 # Google Cloud Run 部署指南
 
+## 🎉 部署成功！
+
+**您的 Orange Trade 應用已成功部署到 Google Cloud Run！**
+
+- **服務 URL**: https://orange-trade-1069330928314.us-central1.run.app
+- **專案 ID**: orange-stock-465916
+- **地區**: us-central1
+- **狀態**: ✅ 運行中
+
+### 快速操作指令：
+- **查看狀態**: `check-deployment.bat`
+- **更新環境變量**: `update-env-vars.bat`
+- **重新部署**: `redeploy.bat`
+
+---
+
 ## 第一步：安裝 Git (Windows)
 
 ### 方法 1：手動下載安裝

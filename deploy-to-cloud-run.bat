@@ -5,7 +5,7 @@ REM Google Cloud Run 部署腳本 (Windows 版)
 REM 使用前請確保已安裝 gcloud CLI 並已登入
 
 REM 設定變數
-set PROJECT_ID=
+set PROJECT_ID=orange-stock-465916
 set SERVICE_NAME=orange-trade
 set REGION=asia-east1
 set IMAGE_NAME=orange-trade
@@ -14,11 +14,6 @@ echo ===================================
 echo Orange Trade Google Cloud Run 部署腳本
 echo ===================================
 echo.
-
-REM 檢查是否已設定專案 ID
-if "%PROJECT_ID%"=="" (
-    set /p PROJECT_ID="請輸入您的 Google Cloud 專案 ID: "
-)
 
 REM 設定專案
 echo.

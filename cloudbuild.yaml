@@ -1,0 +1,27 @@
+steps:
+  # 建構 Docker 映像
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/orange-trade', '.']
+  
+  # 推送映像到 Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/orange-trade']
+  
+  # 部署到 Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'orange-trade'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/orange-trade'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+
+# 設定映像
+images:
+  - 'gcr.io/$PROJECT_ID/orange-trade' 

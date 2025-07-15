@@ -1,6 +1,9 @@
 # 使用官方Node.js 18 LTS映像
 FROM node:18-alpine
 
+# 安裝 curl 進行健康檢查
+RUN apk add --no-cache curl
+
 # 設置工作目錄
 WORKDIR /app
 
@@ -25,6 +28,10 @@ USER orange
 
 # 暴露端口
 EXPOSE 3000
+
+# 設置環境變數
+ENV PORT=3000
+ENV NODE_ENV=production
 
 # 健康檢查
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

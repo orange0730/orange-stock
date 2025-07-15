@@ -18,10 +18,17 @@ async function initFirestore() {
             admin.initializeApp();
         } else if (fs.existsSync(path.join(__dirname, '..', 'firestore-key.json'))) {
             // 使用本地憑證檔案
-            const serviceAccount = require('../firestore-key.json');
-            admin.initializeApp({
-                credential: admin.credential.cert(serviceAccount)
-            });
+            try {
+                const serviceAccount = require('../firestore-key.json');
+                admin.initializeApp({
+                    credential: admin.credential.cert(serviceAccount)
+                });
+            } catch (error) {
+                console.log('無法載入本地憑證，嘗試使用預設憑證');
+                admin.initializeApp({
+                    projectId: process.env.FIRESTORE_PROJECT_ID || 'orange-stock-465916'
+                });
+            }
         } else if (process.env.FIRESTORE_PROJECT_ID) {
             // 在 Cloud Run 上使用預設憑證
             admin.initializeApp({
@@ -92,9 +99,17 @@ function getFirestore() {
 
 // 檢查是否使用 Firestore
 function isFirestoreEnabled() {
-    return process.env.FIRESTORE_ENABLED === 'true' || 
-           process.env.USE_FIRESTORE === 'true' ||
-           fs.existsSync(path.join(__dirname, '..', 'firestore-key.json'));
+    // 在 Cloud Run 上，只檢查環境變數
+    if (process.env.FIRESTORE_ENABLED === 'true' || process.env.USE_FIRESTORE === 'true') {
+        return true;
+    }
+    
+    // 本地開發時，檢查憑證檔案
+    if (process.env.NODE_ENV !== 'production' && fs.existsSync(path.join(__dirname, '..', 'firestore-key.json'))) {
+        return true;
+    }
+    
+    return false;
 }
 
 // 數據遷移工具：從 SQLite 到 Firestore

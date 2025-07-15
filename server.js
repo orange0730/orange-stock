@@ -105,8 +105,8 @@ io.on('connection', (socket) => {
           type: type
         });
 
-        // 檢查並執行限價單
-        checkAndExecuteLimitOrders(newPrice);
+        // 暫時停用限價單檢查，等待 Firestore 整合完成
+        // checkAndExecuteLimitOrders(newPrice);
 
         // 發送交易成功
         socket.emit('trade_success', result);
@@ -134,8 +134,8 @@ setInterval(() => {
     type: 'fluctuation'
   });
 
-  // 檢查並執行限價單
-  checkAndExecuteLimitOrders(newPrice);
+  // 暫時停用限價單檢查，等待 Firestore 整合完成
+  // checkAndExecuteLimitOrders(newPrice);
 }, 5000);
 
 // 初始化數據庫並啟動服務器

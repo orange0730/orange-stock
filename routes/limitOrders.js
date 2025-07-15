@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { verifyToken } = require('../services/userService');
-const { getDb } = require('../database/init');
+const { getDb, isUsingFirestore } = require('../database/init');
 
 // 中間件：驗證用戶身份
 function authenticateToken(req, res, next) {
@@ -179,11 +179,17 @@ router.delete('/:orderId', authenticateToken, async (req, res) => {
 });
 
 // 檢查並執行限價單（當股價達到條件時）
-function checkAndExecuteLimitOrders(currentPrice) {
+async function checkAndExecuteLimitOrders(currentPrice) {
   const db = getDb();
   if (!db) return;
 
-  // 查找符合條件的限價單
+  if (isUsingFirestore()) {
+    // Firestore 版本 - 暫時跳過限價單功能
+    console.log('Firestore 模式：限價單功能暫時停用');
+    return;
+  }
+
+  // SQLite 版本
   db.all(
     `SELECT lo.*, u.points 
      FROM limit_orders lo

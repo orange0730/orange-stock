@@ -19,6 +19,9 @@ class OrangeStockApp {
             // 立即隱藏載入畫面，避免卡死
             this.hideLoadingOverlay();
             
+            // 顯示資料持久性警告
+            this.showPersistenceWarning();
+            
             this.checkAuthStatus();
             this.bindEvents();
             this.connectWebSocket();
@@ -37,6 +40,19 @@ class OrangeStockApp {
         const overlay = document.getElementById('loadingOverlay');
         if (overlay) {
             overlay.style.display = 'none';
+        }
+    }
+    
+    // 顯示資料持久性警告
+    showPersistenceWarning() {
+        const warning = document.getElementById('persistenceWarning');
+        if (warning) {
+            warning.style.display = 'block';
+            
+            // 10秒後自動隱藏
+            setTimeout(() => {
+                warning.style.display = 'none';
+            }, 10000);
         }
     }
 
@@ -194,6 +210,32 @@ class OrangeStockApp {
                 this.loadAdminUsers();
             });
         }
+        
+        // 數據備份按鈕
+        const exportDataBtn = document.getElementById('exportDataBtn');
+        if (exportDataBtn) {
+            exportDataBtn.addEventListener('click', () => {
+                this.exportData();
+            });
+        }
+        
+        // 數據導入按鈕
+        const importDataBtn = document.getElementById('importDataBtn');
+        const importFileInput = document.getElementById('importFileInput');
+        if (importDataBtn && importFileInput) {
+            importDataBtn.addEventListener('click', () => {
+                importFileInput.click();
+            });
+            
+            importFileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    this.importData(e.target.files[0]);
+                }
+            });
+        }
+        
+        // 載入數據庫統計
+        this.loadDatabaseStats();
     }
 
     // WebSocket連接
@@ -1413,9 +1455,229 @@ class OrangeStockApp {
             </div>
         `).join('');
     }
+    
+    // 導出數據
+    async exportData() {
+        try {
+            const token = localStorage.getItem('orangeToken');
+            const response = await fetch('/api/admin/export', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                // 創建下載連結
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const filename = `orange_stock_backup_${new Date().toISOString().split('T')[0]}.json`;
+                
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                this.showNotification(`數據備份成功：${filename}`, 'success');
+            } else {
+                this.showNotification('導出失敗', 'error');
+            }
+        } catch (error) {
+            console.error('Export error:', error);
+            this.showNotification('導出失敗：' + error.message, 'error');
+        }
+    }
+    
+    // 導入數據
+    async importData(file) {
+        try {
+            const fileContent = await file.text();
+            const data = JSON.parse(fileContent);
+            
+            if (!data.version || !data.users || !data.transactions) {
+                throw new Error('無效的備份檔案格式');
+            }
+            
+            // 確認導入
+            const confirmMsg = `確定要導入備份嗎？\n\n` +
+                `備份時間：${data.exportTime}\n` +
+                `用戶數：${data.users.length}\n` +
+                `交易數：${data.transactions.length}\n\n` +
+                `這會覆蓋現有的用戶資料！`;
+                
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+            
+            const token = localStorage.getItem('orangeToken');
+            const response = await fetch('/api/admin/import', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showNotification(`導入成功！已導入 ${result.imported.users} 個用戶，${result.imported.transactions} 筆交易`, 'success');
+                
+                // 刷新頁面以載入新數據
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                throw new Error(result.error || '導入失敗');
+            }
+        } catch (error) {
+            console.error('Import error:', error);
+            this.showNotification('導入失敗：' + error.message, 'error');
+        }
+    }
+    
+    // 載入數據庫統計
+    async loadDatabaseStats() {
+        try {
+            const token = localStorage.getItem('orangeToken');
+            const response = await fetch('/api/admin/stats', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                const stats = await response.json();
+                
+                const backupStats = document.getElementById('backupStats');
+                const dbStatsInfo = document.getElementById('dbStatsInfo');
+                
+                if (backupStats && dbStatsInfo) {
+                    backupStats.style.display = 'block';
+                    dbStatsInfo.innerHTML = `
+                        <div class="stat-item">
+                            <span class="stat-label">用戶總數</span>
+                            <span class="stat-value">${stats.users || 0}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">交易記錄</span>
+                            <span class="stat-value">${stats.transactions || 0}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">股價歷史</span>
+                            <span class="stat-value">${stats.stock_history || 0}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">待處理訂單</span>
+                            <span class="stat-value">${stats.pending_orders || 0}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">數據庫大小</span>
+                            <span class="stat-value">${stats.database_size || 'N/A'}</span>
+                        </div>
+                    `;
+                }
+            }
+        } catch (error) {
+            console.error('Load stats error:', error);
+        }
+    }
 }
 
 // 啟動應用程式
 document.addEventListener('DOMContentLoaded', () => {
-    new OrangeStockApp();
+    const app = new OrangeStockApp();
+    
+    // 手機版底部導航功能
+    const bottomNavItems = document.querySelectorAll('.bottom-nav-item');
+    const sections = {
+        trading: document.getElementById('tradingSection'),
+        stockInfo: document.getElementById('stockInfoSection'),
+        portfolio: document.getElementById('profileModal'),
+        profile: document.getElementById('profileModal')
+    };
+    
+    // 初始化手機導航
+    if (window.innerWidth <= 768) {
+        initializeMobileNavigation();
+    }
+    
+    function initializeMobileNavigation() {
+        bottomNavItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // 移除所有 active 類
+                bottomNavItems.forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+                
+                const section = item.getAttribute('data-section');
+                
+                // 處理不同的區塊顯示
+                switch(section) {
+                    case 'trading':
+                        showTradingSection();
+                        break;
+                    case 'stockInfo':
+                        showStockInfoSection();
+                        break;
+                    case 'portfolio':
+                        showPortfolioSection();
+                        break;
+                    case 'profile':
+                        showProfileSection();
+                        break;
+                }
+            });
+        });
+    }
+    
+    function hideAllSections() {
+        const mainSections = document.querySelectorAll('main > section');
+        mainSections.forEach(section => section.style.display = 'none');
+    }
+    
+    function showTradingSection() {
+        hideAllSections();
+        const tradingSection = document.getElementById('tradingSection');
+        if (tradingSection) tradingSection.style.display = 'block';
+    }
+    
+    function showStockInfoSection() {
+        hideAllSections();
+        const stockInfoSection = document.getElementById('stockInfoSection');
+        if (stockInfoSection) stockInfoSection.style.display = 'block';
+    }
+    
+    function showPortfolioSection() {
+        if (app.currentUser) {
+            document.getElementById('profileBtn').click();
+        } else {
+            app.showNotification('請先登入', 'error');
+        }
+    }
+    
+    function showProfileSection() {
+        if (app.currentUser) {
+            document.getElementById('profileBtn').click();
+        } else {
+            app.showNotification('請先登入', 'error');
+        }
+    }
+    
+    // 視窗大小改變時的處理
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            if (window.innerWidth <= 768) {
+                initializeMobileNavigation();
+            } else {
+                // 桌面版顯示所有區塊
+                const mainSections = document.querySelectorAll('main > section');
+                mainSections.forEach(section => section.style.display = '');
+            }
+        }, 250);
+    });
 }); 

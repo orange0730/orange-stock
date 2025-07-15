@@ -12,6 +12,7 @@
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles-mobile.css">
 </head>
 <body>
     <!-- 載入動畫 -->
@@ -19,6 +20,15 @@
         <div class="loading-spinner">
             <div class="orange-spinner">🍊</div>
             <p>載入中...</p>
+        </div>
+    </div>
+    
+    <!-- 資料持久性警告 -->
+    <div id="persistenceWarning" class="persistence-warning" style="display: none;">
+        <div class="warning-content">
+            <span class="warning-icon">⚠️</span>
+            <span class="warning-text">測試版本：資料可能在系統重啟後消失，請管理員定期備份！</span>
+            <button class="warning-close" onclick="this.parentElement.parentElement.style.display='none'">×</button>
         </div>
     </div>
 
@@ -741,6 +751,22 @@
                         <button class="admin-action-btn" id="saveAllSettingsBtn">💾 保存所有設置</button>
                     </div>
                     
+                    <div class="backup-section">
+                        <h3>💾 數據備份與還原</h3>
+                        <div class="backup-warning">
+                            <p>⚠️ <strong>重要提醒</strong>：由於部署在 Google Cloud Run，資料會在容器重啟後丟失。請定期備份重要數據！</p>
+                        </div>
+                        <div class="backup-actions">
+                            <button class="admin-action-btn" id="exportDataBtn">📥 導出數據備份</button>
+                            <button class="admin-action-btn" id="importDataBtn">📤 導入數據還原</button>
+                            <input type="file" id="importFileInput" accept=".json" style="display: none;">
+                        </div>
+                        <div class="backup-stats" id="backupStats" style="display: none;">
+                            <h4>數據庫統計</h4>
+                            <div class="stats-info" id="dbStatsInfo"></div>
+                        </div>
+                    </div>
+                    
                     <div class="danger-zone">
                         <h3>⚠️ 危險操作區域</h3>
                         <div class="danger-actions">
@@ -790,6 +816,27 @@
         <span class="status-text">已連接</span>
     </div>
 
+    <!-- 手機版底部導航 -->
+    <nav class="mobile-bottom-nav" id="mobileBottomNav">
+        <a href="#" class="bottom-nav-item active" data-section="trading">
+            <span class="bottom-nav-icon">📈</span>
+            <span class="bottom-nav-label">交易</span>
+        </a>
+        <a href="#" class="bottom-nav-item" data-section="stockInfo">
+            <span class="bottom-nav-icon">📊</span>
+            <span class="bottom-nav-label">行情</span>
+        </a>
+        <a href="#" class="bottom-nav-item" data-section="portfolio">
+            <span class="bottom-nav-icon">💼</span>
+            <span class="bottom-nav-label">持倉</span>
+        </a>
+        <a href="#" class="bottom-nav-item" data-section="profile">
+            <span class="bottom-nav-icon">👤</span>
+            <span class="bottom-nav-label">我的</span>
+        </a>
+    </nav>
+
     <script src="app.js"></script>
+    <script src="mobile-enhancements.js"></script>
 </body>
 </html> 

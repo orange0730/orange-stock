@@ -11,6 +11,7 @@ const authRoutes = require('./routes/auth');
 const { router: tradingRoutes, setSocketIO } = require('./routes/trading');
 const stockRoutes = require('./routes/stock');
 const { router: limitOrdersRoutes, checkAndExecuteLimitOrders } = require('./routes/limitOrders');
+const adminRoutes = require('./routes/admin');
 const { initDatabase, getDb } = require('./database/init');
 const { createLimitOrdersTable } = require('./database/limitOrdersInit');
 const { updateStockPrice, getStockPrice, initializeStockPrice } = require('./services/stockService');
@@ -55,6 +56,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/trading', tradingRoutes);
 app.use('/api/stock', stockRoutes);
 app.use('/api/limit-orders', limitOrdersRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 靜態檔案
 app.get('/', (req, res) => {

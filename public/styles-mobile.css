@@ -1,0 +1,576 @@
+/* 手機版專用樣式 */
+/* 基礎響應式設計 */
+@media (max-width: 768px) {
+    /* 重置基礎樣式 */
+    body {
+        padding-bottom: 70px; /* 為底部導航預留空間 */
+    }
+
+    /* 頂部導航列 */
+    .navbar {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 1000;
+        height: 56px;
+    }
+
+    .nav-container {
+        padding: 0 15px;
+    }
+
+    .nav-brand {
+        font-size: 1.2rem;
+    }
+
+    .brand-icon {
+        font-size: 1.5rem;
+    }
+
+    /* 手機選單 */
+    .nav-menu {
+        position: fixed;
+        top: 56px;
+        left: -100%;
+        width: 80%;
+        height: calc(100vh - 56px);
+        background: var(--bg-secondary);
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        transition: left 0.3s ease;
+        overflow-y: auto;
+        padding: 20px;
+    }
+
+    .nav-menu.active {
+        left: 0;
+    }
+
+    .nav-user-info {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+
+    .nav-btn {
+        width: 100%;
+        padding: 12px 20px;
+        font-size: 1rem;
+        border-radius: 8px;
+        text-align: left;
+    }
+
+    /* 主要內容區域 */
+    main {
+        margin-top: 56px;
+        padding: 10px;
+    }
+
+    /* 底部導航列 */
+    .mobile-bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        z-index: 999;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .bottom-nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        text-decoration: none;
+        color: var(--text-secondary);
+        transition: color 0.3s ease;
+        position: relative;
+    }
+
+    .bottom-nav-item.active {
+        color: var(--primary-color);
+    }
+
+    .bottom-nav-item:hover {
+        background: rgba(255, 165, 0, 0.1);
+    }
+
+    .bottom-nav-icon {
+        font-size: 1.5rem;
+        margin-bottom: 2px;
+    }
+
+    .bottom-nav-label {
+        font-size: 0.7rem;
+    }
+
+    /* 交易容器 - 單欄佈局 */
+    .trading-container {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    /* 圖表容器 */
+    .chart-container {
+        width: 100%;
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+
+    .chart-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .chart-title {
+        font-size: 1.2rem;
+    }
+
+    .chart-controls {
+        width: 100%;
+        display: flex;
+        gap: 5px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .period-btn {
+        flex-shrink: 0;
+        padding: 8px 15px;
+        font-size: 0.9rem;
+    }
+
+    /* 交易面板 */
+    .trading-panel {
+        width: 100%;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    .panel-title {
+        font-size: 1.2rem;
+    }
+
+    .current-price {
+        flex-direction: column;
+        align-items: flex-end;
+    }
+
+    .price-value {
+        font-size: 1.8rem;
+    }
+
+    /* 用戶資產 */
+    .user-portfolio {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 15px 0;
+    }
+
+    .portfolio-item {
+        padding: 10px;
+        text-align: center;
+    }
+
+    .portfolio-label {
+        font-size: 0.8rem;
+    }
+
+    .portfolio-value {
+        font-size: 1rem;
+    }
+
+    .portfolio-value.total {
+        font-size: 1.2rem;
+    }
+
+    /* 交易按鈕 */
+    .trade-mode-selector {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .mode-option {
+        flex: 1;
+        padding: 10px;
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .mode-option:has(input:checked) {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .trade-input-group {
+        margin-bottom: 15px;
+    }
+
+    .trade-input-group input,
+    .limit-price-input input {
+        width: 100%;
+        padding: 12px;
+        font-size: 1rem;
+        border-radius: 8px;
+    }
+
+    .trade-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .trade-btn {
+        flex: 1;
+        padding: 15px;
+        font-size: 1rem;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .btn-icon {
+        font-size: 1.5rem;
+    }
+
+    .trade-cost,
+    .trade-revenue {
+        font-size: 0.9rem;
+    }
+
+    /* 五檔報價 */
+    .order-book-container {
+        width: 100%;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    .order-book {
+        max-height: 300px;
+    }
+
+    .order-row {
+        padding: 8px 10px;
+        font-size: 0.9rem;
+    }
+
+    /* 最近成交 */
+    .recent-trades-container {
+        width: 100%;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    .trades-list {
+        max-height: 250px;
+    }
+
+    .trade-record {
+        grid-template-columns: 1fr 1fr 1fr 0.8fr;
+        font-size: 0.85rem;
+        padding: 8px 5px;
+    }
+
+    /* 模態框 */
+    .modal-content {
+        width: 95%;
+        max-width: none;
+        margin: 20px auto;
+        max-height: calc(100vh - 40px);
+    }
+
+    .modal-header {
+        padding: 15px;
+    }
+
+    .modal-title {
+        font-size: 1.2rem;
+    }
+
+    .modal-body {
+        padding: 15px;
+    }
+
+    /* 交易歷史表格 */
+    .transaction-table {
+        font-size: 0.8rem;
+    }
+
+    .transaction-table th,
+    .transaction-table td {
+        padding: 8px 5px;
+    }
+
+    /* 隱藏部分欄位節省空間 */
+    .transaction-table th:nth-child(3),
+    .transaction-table td:nth-child(3) {
+        display: none;
+    }
+
+    /* 股票信息區 */
+    .stock-info-section {
+        padding: 15px;
+    }
+
+    .stock-info-grid {
+        gap: 10px;
+    }
+
+    .info-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .info-item {
+        width: 100%;
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--bg-secondary);
+        border-radius: 8px;
+    }
+
+    .info-label {
+        font-size: 0.9rem;
+    }
+
+    .info-value {
+        font-size: 1rem;
+    }
+
+    /* 表單樣式 */
+    .auth-form {
+        padding: 20px;
+        margin: 10px;
+    }
+
+    .form-group input {
+        padding: 12px;
+        font-size: 1rem;
+    }
+
+    .form-submit-btn {
+        padding: 15px;
+        font-size: 1rem;
+    }
+
+    /* 管理面板 */
+    .admin-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 5px;
+    }
+
+    .admin-tab {
+        flex-shrink: 0;
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+
+    .settings-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    /* 通知訊息 */
+    .notification {
+        left: 10px;
+        right: 10px;
+        top: 70px;
+        font-size: 0.9rem;
+        padding: 12px 15px;
+    }
+
+    /* 載入動畫 */
+    .loading-spinner {
+        transform: scale(0.8);
+    }
+}
+
+/* 超小螢幕適配 (< 375px) */
+@media (max-width: 374px) {
+    .nav-brand span {
+        display: none;
+    }
+
+    .portfolio-item {
+        padding: 8px;
+    }
+
+    .portfolio-label {
+        font-size: 0.75rem;
+    }
+
+    .portfolio-value {
+        font-size: 0.9rem;
+    }
+
+    .trade-btn {
+        padding: 12px 8px;
+        font-size: 0.9rem;
+    }
+
+    .bottom-nav-icon {
+        font-size: 1.3rem;
+    }
+
+    .bottom-nav-label {
+        font-size: 0.65rem;
+    }
+}
+
+/* 觸控優化 */
+@media (hover: none) and (pointer: coarse) {
+    /* 增大可點擊區域 */
+    button, 
+    .clickable, 
+    a {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* 移除 hover 效果 */
+    button:hover,
+    .clickable:hover,
+    a:hover {
+        transform: none;
+    }
+
+    /* 增強觸控反饋 */
+    button:active,
+    .clickable:active,
+    a:active {
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+}
+
+/* 深色模式優化 */
+@media (prefers-color-scheme: dark) {
+    .mobile-bottom-nav {
+        background: #1a1a1a;
+        border-top-color: #333;
+    }
+
+    .nav-menu {
+        background: #1a1a1a;
+    }
+
+    .modal-content {
+        background: #1a1a1a;
+    }
+}
+
+/* 下拉刷新指示器 */
+.pull-to-refresh-indicator {
+    position: absolute;
+    top: -50px;
+    left: 0;
+    right: 0;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 10;
+}
+
+.pull-to-refresh-indicator span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pull-to-refresh-indicator span::before {
+    content: '↓';
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+}
+
+/* 手機載入指示器 */
+.mobile-loading-indicator {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10000;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.mobile-loading-indicator .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 手機專屬動畫優化 */
+@media (max-width: 768px) {
+    /* 減少動畫以提升性能 */
+    * {
+        animation-duration: 0.2s !important;
+        transition-duration: 0.2s !important;
+    }
+    
+    /* 禁用複雜動畫 */
+    .chart-wrapper canvas {
+        animation: none !important;
+    }
+}
+
+/* 手機橫屏優化 */
+@media (max-width: 768px) and (orientation: landscape) {
+    .navbar {
+        height: 48px;
+    }
+    
+    .mobile-bottom-nav {
+        height: 48px;
+    }
+    
+    .bottom-nav-icon {
+        font-size: 1.2rem;
+    }
+    
+    .bottom-nav-label {
+        display: none;
+    }
+    
+    main {
+        margin-top: 48px;
+        padding-bottom: 48px;
+    }
+    
+    .trading-panel {
+        max-height: calc(100vh - 96px);
+        overflow-y: auto;
+    }
+} 

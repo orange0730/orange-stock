@@ -16,6 +16,12 @@ yarn-error.log*
 *.sqlite
 *.sqlite3
 
+# Firebase 憑證檔案
+firestore-key.json
+firebase-adminsdk-*.json
+serviceAccountKey.json
+*-firebase-adminsdk-*.json
+
 # 日誌檔案
 logs/
 *.log

@@ -1,10 +1,27 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const { isFirestoreEnabled, initFirestore } = require('./firestore-init');
+const firestoreDB = require('./firestore-db');
 
 let db;
+let useFirestore = false;
 
 // 數據庫初始化
-function initDatabase() {
+async function initDatabase() {
+  // 檢查是否使用 Firestore
+  if (isFirestoreEnabled()) {
+    try {
+      await initFirestore();
+      useFirestore = true;
+      console.log('✅ 使用 Firestore 作為數據庫');
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Firestore 初始化失敗，回退到 SQLite:', error.message);
+      useFirestore = false;
+    }
+  }
+  
+  // 使用 SQLite
   return new Promise((resolve, reject) => {
     const dbPath = path.join(__dirname, '..', 'data', 'orange_stock.db');
     
@@ -218,6 +235,10 @@ function initializeDefaultData() {
 
 // 獲取數據庫實例
 function getDb() {
+  if (useFirestore) {
+    // 返回 Firestore 包裝器
+    return firestoreDB;
+  }
   return db;
 }
 

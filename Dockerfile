@@ -14,11 +14,15 @@ RUN adduser -S orange -u 1001
 # 複製package文件
 COPY package*.json ./
 
-# 安裝依賴
-RUN npm ci --only=production && npm cache clean --force
+# 刪除任何現有的 node_modules 並重新安裝依賴
+# 這確保 native modules 為 Linux 正確構建
+RUN rm -rf node_modules && \
+    npm ci --only=production && \
+    npm rebuild && \
+    npm cache clean --force
 
-# 複製應用代碼
-COPY . .
+# 複製應用代碼（排除 node_modules）
+COPY . ./
 
 # 創建數據目錄並設置權限
 RUN mkdir -p data && chown -R orange:nodejs /app

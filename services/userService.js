@@ -1,5 +1,5 @@
 const { getDb } = require('../database/init');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'orange_stock_secret_2024';

@@ -1,8 +1,9 @@
-const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const { isFirestoreEnabled, initFirestore } = require('./firestore-init');
 const firestoreDB = require('./firestore-db');
 
+// 延遲載入 sqlite3，只在需要時才載入
+let sqlite3;
 let db;
 let useFirestore = false;
 
@@ -19,6 +20,11 @@ async function initDatabase() {
       console.error('Firestore 初始化失敗，回退到 SQLite:', error.message);
       useFirestore = false;
     }
+  }
+  
+  // 只有在真正需要 SQLite 時才載入
+  if (!useFirestore) {
+    sqlite3 = require('sqlite3').verbose();
   }
   
   // 使用 SQLite
@@ -258,5 +264,6 @@ function closeDatabase() {
 module.exports = {
   initDatabase,
   getDb,
-  closeDatabase
+  closeDatabase,
+  isUsingFirestore: () => useFirestore
 };

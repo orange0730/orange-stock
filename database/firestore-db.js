@@ -1,230 +1,216 @@
-const { getFirestore, admin } = require('./firestore-init');
+const admin = require('firebase-admin');
+const path = require('path');
 
-// 模擬 SQLite 的 db.get 方法
-function get(collection, query, callback) {
-    const db = getFirestore();
-    
-    db.collection(collection)
-        .where(query.field, query.operator || '==', query.value)
-        .limit(1)
-        .get()
-        .then(snapshot => {
-            if (snapshot.empty) {
-                callback(null, null);
-            } else {
-                const doc = snapshot.docs[0];
-                callback(null, { id: doc.id, ...doc.data() });
-            }
-        })
-        .catch(error => callback(error));
-}
+let db = null;
+let isInitialized = false;
 
-// 模擬 SQLite 的 db.all 方法
-function all(collection, query, callback) {
-    const db = getFirestore();
-    let queryRef = db.collection(collection);
-    
-    // 處理查詢條件
-    if (query) {
-        if (query.where) {
-            query.where.forEach(condition => {
-                queryRef = queryRef.where(condition.field, condition.operator || '==', condition.value);
-            });
+// 初始化 Firestore
+async function initFirestore() {
+    try {
+        if (isInitialized) {
+            console.log('Firestore 已經初始化');
+            return true;
         }
-        if (query.orderBy) {
-            queryRef = queryRef.orderBy(query.orderBy.field, query.orderBy.direction || 'asc');
-        }
-        if (query.limit) {
-            queryRef = queryRef.limit(query.limit);
-        }
-    }
-    
-    queryRef.get()
-        .then(snapshot => {
-            const results = [];
-            snapshot.forEach(doc => {
-                results.push({ id: doc.id, ...doc.data() });
-            });
-            callback(null, results);
-        })
-        .catch(error => callback(error));
-}
 
-// 模擬 SQLite 的 db.run 方法（插入/更新/刪除）
-function run(operation, callback) {
-    const db = getFirestore();
-    
-    switch (operation.type) {
-        case 'insert':
-            const docData = { ...operation.data };
-            if (!docData.id) {
-                // 自動生成 ID
-                db.collection(operation.collection).add({
-                    ...docData,
-                    createdAt: admin.firestore.FieldValue.serverTimestamp()
-                })
-                .then(docRef => callback(null, { lastID: docRef.id }))
-                .catch(error => callback(error));
-            } else {
-                // 使用指定的 ID
-                const id = docData.id;
-                delete docData.id;
-                db.collection(operation.collection).doc(id.toString()).set({
-                    ...docData,
-                    createdAt: admin.firestore.FieldValue.serverTimestamp()
-                })
-                .then(() => callback(null, { lastID: id }))
-                .catch(error => callback(error));
-            }
-            break;
-            
-        case 'update':
-            db.collection(operation.collection).doc(operation.id.toString()).update({
-                ...operation.data,
-                updatedAt: admin.firestore.FieldValue.serverTimestamp()
-            })
-            .then(() => callback(null, { changes: 1 }))
-            .catch(error => callback(error));
-            break;
-            
-        case 'delete':
-            db.collection(operation.collection).doc(operation.id.toString()).delete()
-            .then(() => callback(null, { changes: 1 }))
-            .catch(error => callback(error));
-            break;
-            
-        default:
-            callback(new Error('不支援的操作類型'));
+        const keyPath = process.env.FIRESTORE_KEY_PATH || './firestore-key.json';
+        const projectId = process.env.FIRESTORE_PROJECT_ID || 'orange-stock-465916';
+        
+        console.log('正在初始化 Firestore...');
+        console.log('金鑰路徑:', keyPath);
+        console.log('專案 ID:', projectId);
+        
+        // 初始化 Firebase Admin
+        admin.initializeApp({
+            credential: admin.credential.cert(require(path.resolve(keyPath))),
+            projectId: projectId
+        });
+        
+        db = admin.firestore();
+        
+        // 設定 Firestore
+        const settings = {
+            timestampsInSnapshots: true,
+            ignoreUndefinedProperties: true
+        };
+        db.settings(settings);
+        
+        // 測試連接
+        const testDoc = await db.collection('_test').doc('test').get();
+        console.log('✅ Firestore 連接成功！');
+        
+        isInitialized = true;
+        return true;
+    } catch (error) {
+        console.error('❌ Firestore 初始化失敗:', error.message);
+        console.error('詳細錯誤:', error);
+        return false;
     }
 }
 
-// 創建用戶相關的包裝函數
-const firestoreDB = {
-    // 用戶操作
-    getUserByUsername: (username, callback) => {
-        get('users', { field: 'username', value: username }, callback);
+// 取得 Firestore 實例
+function getFirestore() {
+    if (!db) {
+        throw new Error('Firestore 尚未初始化');
+    }
+    return db;
+}
+
+// 檢查是否已連接
+function isConnected() {
+    return isInitialized && db !== null;
+}
+
+// 用戶集合操作
+const users = {
+    async create(userData) {
+        const docRef = db.collection('users').doc(userData.username);
+        await docRef.set({
+            ...userData,
+            created_at: admin.firestore.FieldValue.serverTimestamp(),
+            updated_at: admin.firestore.FieldValue.serverTimestamp()
+        });
+        return { id: docRef.id, ...userData };
     },
     
-    getUserByEmail: (email, callback) => {
-        get('users', { field: 'email', value: email }, callback);
+    async findByUsername(username) {
+        const doc = await db.collection('users').doc(username).get();
+        return doc.exists ? { id: doc.id, ...doc.data() } : null;
     },
     
-    getUserById: (id, callback) => {
-        const db = getFirestore();
-        db.collection('users').doc(id.toString()).get()
-            .then(doc => {
-                if (doc.exists) {
-                    callback(null, { id: doc.id, ...doc.data() });
-                } else {
-                    callback(null, null);
-                }
-            })
-            .catch(error => callback(error));
+    async findByEmail(email) {
+        const snapshot = await db.collection('users')
+            .where('email', '==', email)
+            .limit(1)
+            .get();
+        
+        if (snapshot.empty) return null;
+        const doc = snapshot.docs[0];
+        return { id: doc.id, ...doc.data() };
     },
     
-    createUser: (userData, callback) => {
-        run({
-            type: 'insert',
-            collection: 'users',
-            data: userData
-        }, callback);
+    async findById(userId) {
+        // 首先嘗試用 userId 作為文檔 ID
+        const docById = await db.collection('users').doc(userId).get();
+        if (docById.exists) {
+            return { id: docById.id, ...docById.data() };
+        }
+        
+        // 如果找不到，嘗試查詢 id 欄位
+        const snapshot = await db.collection('users')
+            .where('id', '==', userId)
+            .limit(1)
+            .get();
+        
+        if (snapshot.empty) return null;
+        const doc = snapshot.docs[0];
+        return { id: doc.id, ...doc.data() };
     },
     
-    updateUser: (id, updates, callback) => {
-        run({
-            type: 'update',
-            collection: 'users',
-            id: id,
-            data: updates
-        }, callback);
-    },
-    
-    // 交易操作
-    createTransaction: (transData, callback) => {
-        run({
-            type: 'insert',
-            collection: 'transactions',
-            data: {
-                ...transData,
-                timestamp: admin.firestore.FieldValue.serverTimestamp()
-            }
-        }, callback);
-    },
-    
-    getUserTransactions: (userId, limit, callback) => {
-        all('transactions', {
-            where: [{ field: 'userId', value: userId.toString() }],
-            orderBy: { field: 'timestamp', direction: 'desc' },
-            limit: limit
-        }, callback);
-    },
-    
-    // 股價歷史
-    addPriceHistory: (price, volume, callback) => {
-        run({
-            type: 'insert',
-            collection: 'stockHistory',
-            data: {
-                price: price,
-                volume: volume,
-                timestamp: admin.firestore.FieldValue.serverTimestamp()
-            }
-        }, callback);
-    },
-    
-    getPriceHistory: (limit, callback) => {
-        all('stockHistory', {
-            orderBy: { field: 'timestamp', direction: 'desc' },
-            limit: limit
-        }, callback);
-    },
-    
-    // 系統設定
-    getSystemSettings: async () => {
-        const db = getFirestore();
-        const doc = await db.collection('settings').doc('system').get();
-        return doc.exists ? doc.data() : null;
-    },
-    
-    updateSystemSettings: async (updates) => {
-        const db = getFirestore();
-        await db.collection('settings').doc('system').update({
-            ...updates,
-            lastUpdate: admin.firestore.FieldValue.serverTimestamp()
+    async updatePoints(username, points) {
+        await db.collection('users').doc(username).update({
+            points: points,
+            updated_at: admin.firestore.FieldValue.serverTimestamp()
         });
     },
     
-    // 統計資料
-    getStats: async () => {
-        const db = getFirestore();
-        const stats = {};
-        
-        // 用戶統計
-        const usersSnapshot = await db.collection('users').get();
-        stats.totalUsers = usersSnapshot.size;
-        stats.adminUsers = usersSnapshot.docs.filter(doc => doc.data().role === 'admin').length;
-        
-        // 交易統計
-        const transSnapshot = await db.collection('transactions').get();
-        stats.totalTransactions = transSnapshot.size;
-        
-        // 今日統計
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayTimestamp = admin.firestore.Timestamp.fromDate(today);
-        
-        const todayUsers = await db.collection('users')
-            .where('createdAt', '>=', todayTimestamp)
+    async getTopTraders(limit = 10) {
+        const snapshot = await db.collection('users')
+            .orderBy('points', 'desc')
+            .limit(limit)
             .get();
-        stats.newUsersToday = todayUsers.size;
         
-        const todayTrans = await db.collection('transactions')
-            .where('timestamp', '>=', todayTimestamp)
-            .get();
-        stats.transactionsToday = todayTrans.size;
-        
-        return stats;
+        return snapshot.docs.map(doc => ({
+            username: doc.id,
+            points: doc.data().points
+        }));
     }
 };
 
-module.exports = firestoreDB; 
+// 交易記錄集合操作
+const transactions = {
+    async create(transactionData) {
+        const docRef = await db.collection('transactions').add({
+            ...transactionData,
+            timestamp: admin.firestore.FieldValue.serverTimestamp()
+        });
+        return { id: docRef.id, ...transactionData };
+    },
+    
+    async findByUserId(userId, limit = 10) {
+        const snapshot = await db.collection('transactions')
+            .where('user_id', '==', userId)
+            .orderBy('timestamp', 'desc')
+            .limit(limit)
+            .get();
+        
+        return snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+    }
+};
+
+// 股票歷史集合操作
+const stockHistory = {
+    async create(historyData) {
+        const docRef = await db.collection('stockHistory').add({
+            ...historyData,
+            timestamp: admin.firestore.FieldValue.serverTimestamp()
+        });
+        return { id: docRef.id, ...historyData };
+    },
+    
+    async getLatest(limit = 50) {
+        const snapshot = await db.collection('stockHistory')
+            .orderBy('timestamp', 'desc')
+            .limit(limit)
+            .get();
+        
+        return snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+    }
+};
+
+// 限價單集合操作
+const limitOrders = {
+    async create(orderData) {
+        const docRef = await db.collection('limitOrders').add({
+            ...orderData,
+            created_at: admin.firestore.FieldValue.serverTimestamp(),
+            status: 'pending'
+        });
+        return { id: docRef.id, ...orderData };
+    },
+    
+    async findPending() {
+        const snapshot = await db.collection('limitOrders')
+            .where('status', '==', 'pending')
+            .get();
+        
+        return snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+    },
+    
+    async updateStatus(orderId, status) {
+        await db.collection('limitOrders').doc(orderId).update({
+            status: status,
+            updated_at: admin.firestore.FieldValue.serverTimestamp()
+        });
+    }
+};
+
+module.exports = {
+    initFirestore,
+    getFirestore,
+    isConnected,
+    collections: {
+        users,
+        transactions,
+        stockHistory,
+        limitOrders
+    }
+}; 

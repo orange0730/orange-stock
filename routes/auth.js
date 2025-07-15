@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser, verifyToken } = require('../services/userService');
+const { registerUser, loginUser, verifyToken } = require('../services/serviceLoader');
 
 // 用戶註冊
 router.post('/register', async (req, res) => {

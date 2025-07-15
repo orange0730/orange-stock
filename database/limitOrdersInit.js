@@ -3,18 +3,10 @@ const { getDb, isUsingFirestore } = require('./init');
 // 創建限價單表
 function createLimitOrdersTable() {
   return new Promise((resolve, reject) => {
-    // 如果使用 Firestore，不需要創建表
-    if (isUsingFirestore()) {
-      console.log('使用 Firestore，無需創建限價單表');
-      resolve();
-      return;
-    }
-
-    const db = getDb();
-    if (!db) {
-      reject(new Error('數據庫未連接'));
-      return;
-    }
+    // 暫時跳過限價單表創建
+    console.log('使用記憶體儲存，無需創建限價單表');
+    resolve();
+    return;
 
     const sql = `
       CREATE TABLE IF NOT EXISTS limit_orders (

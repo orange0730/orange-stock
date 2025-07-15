@@ -12,10 +12,12 @@ const { router: tradingRoutes, setSocketIO } = require('./routes/trading');
 const stockRoutes = require('./routes/stock');
 const { router: limitOrdersRoutes, checkAndExecuteLimitOrders } = require('./routes/limitOrders');
 const adminRoutes = require('./routes/admin');
-const { initDatabase, getDb } = require('./database/init');
+const { initDatabase, getDb, isUsingFirestore } = require('./database/init');
 const { createLimitOrdersTable } = require('./database/limitOrdersInit');
 const { updateStockPrice, getStockPrice, initializeStockPrice } = require('./services/stockService');
 const { getUserBalance } = require('./services/userService');
+const { initCosmosDB } = require('./database/cosmos-db');
+const { initFirestore } = require('./database/firestore-db');
 
 const app = express();
 const server = http.createServer(app);
@@ -48,6 +50,29 @@ app.use(async (req, res, next) => {
     next();
   } catch {
     res.status(429).json({ error: '請求過於頻繁，請稍後再試' });
+  }
+});
+
+// 健康檢查和測試端點
+app.get('/api/health', async (req, res) => {
+  try {
+    const db = getDb();
+    const dbType = isUsingFirestore() ? 'Firestore' : 'SQLite';
+    
+    res.json({
+      status: 'healthy',
+      database: dbType,
+      dbConnected: db !== null,
+      timestamp: new Date(),
+      environment: process.env.NODE_ENV,
+      firestoreEnabled: process.env.FIRESTORE_ENABLED,
+      projectId: process.env.FIRESTORE_PROJECT_ID
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      error: error.message
+    });
   }
 });
 
@@ -143,6 +168,27 @@ const PORT = process.env.PORT || 3000;
 
 async function startServer() {
   try {
+    // 檢查是否啟用 Firestore
+    if (process.env.FIRESTORE_ENABLED === 'true') {
+      console.log('正在初始化 Google Firestore...');
+      const firestoreSuccess = await initFirestore();
+      if (firestoreSuccess) {
+        console.log('✅ Google Firestore 初始化完成');
+      } else {
+        console.log('⚠️ Google Firestore 初始化失敗，使用記憶體儲存');
+      }
+    }
+    // 檢查是否啟用 Cosmos DB
+    else if (process.env.COSMOS_ENABLED === 'true') {
+      console.log('正在初始化 Azure Cosmos DB...');
+      const cosmosSuccess = await initCosmosDB();
+      if (cosmosSuccess) {
+        console.log('✅ Azure Cosmos DB 初始化完成');
+      } else {
+        console.log('⚠️ Azure Cosmos DB 初始化失敗，使用記憶體儲存');
+      }
+    }
+    
     await initDatabase();
     console.log('數據庫初始化完成');
     

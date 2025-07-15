@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 測試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        input {
+            display: block;
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .error {
+            background-color: #fee;
+            border-color: #fcc;
+        }
+        .success {
+            background-color: #efe;
+            border-color: #cfc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Orange Trade API 測試</h1>
+        
+        <div class="section">
+            <h2>健康檢查</h2>
+            <button onclick="checkHealth()">檢查系統狀態</button>
+            <div id="healthResult" class="result" style="display:none;"></div>
+        </div>
+        
+        <div class="section">
+            <h2>用戶註冊</h2>
+            <input type="text" id="regUsername" placeholder="用戶名" value="testuser">
+            <input type="email" id="regEmail" placeholder="電子郵件" value="test@test.com">
+            <input type="password" id="regPassword" placeholder="密碼" value="test123">
+            <button onclick="register()">註冊</button>
+            <div id="registerResult" class="result" style="display:none;"></div>
+        </div>
+        
+        <div class="section">
+            <h2>用戶登入</h2>
+            <input type="text" id="loginUsername" placeholder="用戶名" value="testuser">
+            <input type="password" id="loginPassword" placeholder="密碼" value="test123">
+            <button onclick="login()">登入</button>
+            <div id="loginResult" class="result" style="display:none;"></div>
+        </div>
+        
+        <div class="section">
+            <h2>股價查詢</h2>
+            <button onclick="getPrice()">查詢當前股價</button>
+            <div id="priceResult" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin + '/api';
+        
+        async function checkHealth() {
+            const resultDiv = document.getElementById('healthResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '檢查中...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                resultDiv.className = response.ok ? 'result success' : 'result error';
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '錯誤: ' + error.message;
+            }
+        }
+        
+        async function register() {
+            const resultDiv = document.getElementById('registerResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '註冊中...';
+            
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, email, password })
+                });
+                
+                const data = await response.json();
+                resultDiv.className = response.ok ? 'result success' : 'result error';
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '錯誤: ' + error.message;
+            }
+        }
+        
+        async function login() {
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '登入中...';
+            
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                resultDiv.className = response.ok ? 'result success' : 'result error';
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+                
+                if (data.token) {
+                    localStorage.setItem('token', data.token);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '錯誤: ' + error.message;
+            }
+        }
+        
+        async function getPrice() {
+            const resultDiv = document.getElementById('priceResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '查詢中...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/stock/price`);
+                const data = await response.json();
+                resultDiv.className = response.ok ? 'result success' : 'result error';
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '錯誤: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

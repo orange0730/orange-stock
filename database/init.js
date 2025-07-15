@@ -9,8 +9,8 @@ let useFirestore = false;
 
 // 數據庫初始化
 async function initDatabase() {
-  // 檢查是否使用 Firestore
-  if (isFirestoreEnabled()) {
+  // 暫時停用 Firestore，使用記憶體儲存
+  if (false && isFirestoreEnabled()) {
     try {
       await initFirestore();
       useFirestore = true;
@@ -22,32 +22,9 @@ async function initDatabase() {
     }
   }
   
-  // 只有在真正需要 SQLite 時才載入
-  if (!useFirestore) {
-    sqlite3 = require('sqlite3').verbose();
-  }
-  
-  // 使用 SQLite
-  return new Promise((resolve, reject) => {
-    const dbPath = path.join(__dirname, '..', 'data', 'orange_stock.db');
-    
-    // 確保data目錄存在
-    const fs = require('fs');
-    const dataDir = path.dirname(dbPath);
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
-    }
-
-    db = new sqlite3.Database(dbPath, (err) => {
-      if (err) {
-        console.error('數據庫連接失敗:', err.message);
-        reject(err);
-      } else {
-        console.log('已連接到SQLite數據庫');
-        createTables().then(resolve).catch(reject);
-      }
-    });
-  });
+  // 暫時跳過 SQLite，使用記憶體儲存
+  console.log('✅ 使用記憶體儲存（暫時方案）');
+  return Promise.resolve();
 }
 
 // 創建所有必要的表
@@ -242,8 +219,14 @@ function initializeDefaultData() {
 // 獲取數據庫實例
 function getDb() {
   if (useFirestore) {
-    // 返回 Firestore 包裝器
-    return firestoreDB;
+    // 返回實際的 Firestore 實例
+    const { getFirestore } = require('./firestore-init');
+    try {
+      return getFirestore();
+    } catch (error) {
+      console.error('獲取 Firestore 實例失敗:', error);
+      return null;
+    }
   }
   return db;
 }

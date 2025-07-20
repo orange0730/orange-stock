@@ -1,7 +1,7 @@
-# 此工作流程會構建和部署 Node.js 應用程式到 Azure Web App
-# 更多信息請參考: https://docs.microsoft.com/azure/developer/javascript/tutorial-vscode-azure-app-service-node-01
+# 此工作�?程�?構建?�部�?Node.js ?�用程�???Azure Web App
+# ?��?信息請�??? https://docs.microsoft.com/azure/developer/javascript/tutorial-vscode-azure-app-service-node-01
 
-name: 構建和部署 Node.js 應用程式到 Azure Web App
+name: 構建?�部�?Node.js ?�用程�???Azure Web App
 
 on:
   push:
@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: orange-trade-app    # 設置為您的應用程式名稱
-  AZURE_WEBAPP_PACKAGE_PATH: '.'         # 設置為項目的路徑，預設為根目錄
-  NODE_VERSION: '18.x'                   # 設置為要使用的 Node.js 版本
+  AZURE_WEBAPP_NAME: orange-trade    # 設置?�您?��??��?式�?�?
+  AZURE_WEBAPP_PACKAGE_PATH: '.'         # 設置?��??��?路�?，�?設為?�目??
+  NODE_VERSION: '18.x'                   # 設置?��?使用??Node.js ?�本
 
 permissions:
   contents: read
@@ -28,16 +28,16 @@ jobs:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
 
-    - name: 安裝依賴、構建和測試
+    - name: 安�?依賴?��?建�?測試
       run: |
         npm ci
         npm run build --if-present
         # npm run test --if-present
 
-    - name: 打包應用程式以進行部署
+    - name: ?��??�用程�?以進�??�署
       run: zip -r node-app.zip . -x "*.git*" "node_modules/*" "tests/*" "*.md"
 
-    - name: 上傳建構物件以供部署作業使用
+    - name: 上傳建�??�件以�??�署作業使用
       uses: actions/upload-artifact@v4
       with:
         name: node-app
@@ -53,15 +53,15 @@ jobs:
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
     steps:
-    - name: 下載建構物件
+    - name: 下�?建�??�件
       uses: actions/download-artifact@v4
       with:
         name: node-app
 
-    - name: 解壓建構物件
+    - name: �??建�??�件
       run: unzip node-app.zip
 
-    - name: '部署到 Azure Web App'
+    - name: '?�署??Azure Web App'
       id: deploy-to-webapp
       uses: azure/webapps-deploy@v2
       with:

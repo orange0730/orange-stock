@@ -1,0 +1,159 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "appName": {
+            "type": "string",
+            "metadata": {
+                "description": "應用程式名稱 (必須全球唯一)"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "allowedValues": [
+                "East Asia",
+                "Southeast Asia",
+                "Japan East",
+                "Korea Central",
+                "Australia East"
+            ],
+            "metadata": {
+                "description": "部署區域"
+            }
+        },
+        "jwtSecret": {
+            "type": "securestring",
+            "metadata": {
+                "description": "JWT 密鑰 (請輸入安全的隨機字符串)"
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "defaultValue": "wudodo",
+            "metadata": {
+                "description": "管理員用戶名"
+            }
+        },
+        "initialStockPrice": {
+            "type": "int",
+            "defaultValue": 10,
+            "metadata": {
+                "description": "初始股價"
+            }
+        }
+    },
+    "variables": {
+        "appServicePlanName": "[concat(parameters('appName'), '-plan')]",
+        "appInsightsName": "[concat(parameters('appName'), '-insights')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2021-02-01",
+            "name": "[variables('appServicePlanName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "B1",
+                "tier": "Basic",
+                "size": "B1",
+                "family": "B",
+                "capacity": 1
+            },
+            "kind": "linux",
+            "properties": {
+                "reserved": true
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2021-02-01",
+            "name": "[parameters('appName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+            ],
+            "kind": "app,linux",
+            "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+                "siteConfig": {
+                    "linuxFxVersion": "NODE|18-lts",
+                    "appSettings": [
+                        {
+                            "name": "NODE_ENV",
+                            "value": "production"
+                        },
+                        {
+                            "name": "PORT",
+                            "value": "8080"
+                        },
+                        {
+                            "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                            "value": "18-lts"
+                        },
+                        {
+                            "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+                            "value": "true"
+                        },
+                        {
+                            "name": "JWT_SECRET",
+                            "value": "[parameters('jwtSecret')]"
+                        },
+                        {
+                            "name": "ADMIN_USERNAME",
+                            "value": "[parameters('adminUsername')]"
+                        },
+                        {
+                            "name": "INITIAL_STOCK_PRICE",
+                            "value": "[parameters('initialStockPrice')]"
+                        }
+                    ],
+                    "webSocketsEnabled": true,
+                    "alwaysOn": true,
+                    "ftpsState": "Disabled"
+                },
+                "httpsOnly": true
+            }
+        },
+        {
+            "type": "Microsoft.Insights/components",
+            "apiVersion": "2020-02-02",
+            "name": "[variables('appInsightsName')]",
+            "location": "[parameters('location')]",
+            "kind": "web",
+            "properties": {
+                "Application_Type": "web"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/config",
+            "apiVersion": "2021-02-01",
+            "name": "[concat(parameters('appName'), '/appsettings')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('appName'))]",
+                "[resourceId('Microsoft.Insights/components', variables('appInsightsName'))]"
+            ],
+            "properties": {
+                "NODE_ENV": "production",
+                "PORT": "8080",
+                "WEBSITE_NODE_DEFAULT_VERSION": "18-lts",
+                "SCM_DO_BUILD_DURING_DEPLOYMENT": "true",
+                "JWT_SECRET": "[parameters('jwtSecret')]",
+                "ADMIN_USERNAME": "[parameters('adminUsername')]",
+                "INITIAL_STOCK_PRICE": "[parameters('initialStockPrice')]",
+                "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName'))).InstrumentationKey]",
+                "APPLICATIONINSIGHTS_CONNECTION_STRING": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName'))).ConnectionString]"
+            }
+        }
+    ],
+    "outputs": {
+        "appUrl": {
+            "type": "string",
+            "value": "[concat('https://', parameters('appName'), '.azurewebsites.net')]"
+        },
+        "appInsightsInstrumentationKey": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName'))).InstrumentationKey]"
+        }
+    }
+} 

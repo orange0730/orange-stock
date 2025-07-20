@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手機版介面預覽</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .preview-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .preview-title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .phone-mockup {
+            background: #000;
+            border-radius: 30px;
+            padding: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-width: 375px;
+            margin: 0 auto;
+        }
+        
+        .phone-screen {
+            background: white;
+            border-radius: 20px;
+            height: 667px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .mockup-navbar {
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .mockup-content {
+            padding: 15px;
+            height: calc(100% - 120px);
+            overflow-y: auto;
+        }
+        
+        .mockup-bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: #fff;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .nav-item.active {
+            color: #ff9500;
+        }
+        
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        
+        .feature-card {
+            background: #f8f8f8;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .feature-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .feature-desc {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .preview-description {
+            text-align: center;
+            margin: 20px 0;
+            color: #666;
+        }
+        
+        .gesture-demo {
+            background: linear-gradient(90deg, #ff9500 0%, #ff9500 50%, #666 50%, #666 100%);
+            height: 100px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .gesture-arrow {
+            position: absolute;
+            animation: swipe 2s infinite;
+        }
+        
+        @keyframes swipe {
+            0% { left: 20%; }
+            50% { left: 80%; }
+            100% { left: 20%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-container">
+        <h1 class="preview-title">🍊 Orange Stock 手機版介面預覽</h1>
+        
+        <div class="preview-grid">
+            <!-- 主要介面預覽 -->
+            <div>
+                <div class="phone-mockup">
+                    <div class="phone-screen">
+                        <div class="mockup-navbar">
+                            <span style="font-size: 20px;">🍊 Orange Stock</span>
+                            <span style="font-size: 20px;">☰</span>
+                        </div>
+                        
+                        <div class="mockup-content">
+                            <div class="feature-card">
+                                <div class="feature-title">💰 當前價格</div>
+                                <div style="font-size: 32px; color: #ff9500;">$100.00</div>
+                            </div>
+                            
+                            <div class="feature-card">
+                                <div class="feature-title">📊 用戶資產</div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <div style="text-align: center;">
+                                        <div style="color: #666;">可用點數</div>
+                                        <div style="font-weight: bold;">10,000</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="color: #666;">持有股票</div>
+                                        <div style="font-weight: bold;">0 股</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="feature-card">
+                                <div class="feature-title">🚀 快速交易</div>
+                                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                    <button style="flex: 1; padding: 15px; background: #4CAF50; color: white; border: none; border-radius: 8px; font-size: 16px;">
+                                        📈 買入
+                                    </button>
+                                    <button style="flex: 1; padding: 15px; background: #f44336; color: white; border: none; border-radius: 8px; font-size: 16px;">
+                                        📉 賣出
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mockup-bottom-nav">
+                            <div class="nav-item active">
+                                <span class="nav-icon">📈</span>
+                                <span>交易</span>
+                            </div>
+                            <div class="nav-item">
+                                <span class="nav-icon">📊</span>
+                                <span>行情</span>
+                            </div>
+                            <div class="nav-item">
+                                <span class="nav-icon">💼</span>
+                                <span>持倉</span>
+                            </div>
+                            <div class="nav-item">
+                                <span class="nav-icon">👤</span>
+                                <span>我的</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="preview-description">底部導航列設計</p>
+            </div>
+            
+            <!-- 手勢操作預覽 -->
+            <div>
+                <div class="phone-mockup">
+                    <div class="phone-screen">
+                        <div class="mockup-navbar">
+                            <span style="font-size: 20px;">🍊 手勢操作</span>
+                        </div>
+                        
+                        <div class="mockup-content">
+                            <div class="feature-card">
+                                <div class="feature-title">👆 下拉刷新</div>
+                                <div class="feature-desc">在頁面頂部下拉即可刷新數據</div>
+                            </div>
+                            
+                            <div class="gesture-demo">
+                                <span>← 左右滑動切換 →</span>
+                                <span class="gesture-arrow" style="font-size: 40px;">👉</span>
+                            </div>
+                            
+                            <div class="feature-card">
+                                <div class="feature-title">📱 觸控優化</div>
+                                <div class="feature-desc">
+                                    • 所有按鈕最小 44px 高度<br>
+                                    • 支援震動反饋<br>
+                                    • 防止誤觸設計
+                                </div>
+                            </div>
+                            
+                            <div class="feature-card">
+                                <div class="feature-title">⌨️ 智能鍵盤</div>
+                                <div class="feature-desc">數字輸入自動顯示數字鍵盤</div>
+                            </div>
+                            
+                            <div class="feature-card">
+                                <div class="feature-title">🔄 性能優化</div>
+                                <div class="feature-desc">
+                                    • 減少動畫時長<br>
+                                    • 優化滾動性能<br>
+                                    • 快速響應
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="preview-description">手勢操作與觸控優化</p>
+            </div>
+            
+            <!-- 橫屏模式預覽 -->
+            <div>
+                <div style="background: #000; border-radius: 30px; padding: 10px; height: 375px; width: 667px; margin: 0 auto; transform: scale(0.6); transform-origin: top center;">
+                    <div class="phone-screen" style="height: 100%;">
+                        <div class="mockup-navbar" style="height: 48px;">
+                            <span style="font-size: 18px;">🍊 Orange Stock</span>
+                        </div>
+                        
+                        <div style="display: flex; height: calc(100% - 96px);">
+                            <div style="flex: 1; padding: 15px; overflow-y: auto;">
+                                <div class="feature-card">
+                                    <div style="font-size: 14px;">橫屏模式優化</div>
+                                    <div style="font-size: 12px; color: #666;">• 縮小導航列高度<br>• 隱藏底部文字標籤<br>• 最大化內容區域</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mockup-bottom-nav" style="height: 48px;">
+                            <span style="font-size: 20px; color: #ff9500;">📈</span>
+                            <span style="font-size: 20px; color: #666;">📊</span>
+                            <span style="font-size: 20px; color: #666;">💼</span>
+                            <span style="font-size: 20px; color: #666;">👤</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="preview-description">橫屏模式適配</p>
+            </div>
+        </div>
+        
+        <div style="margin-top: 50px; text-align: center;">
+            <h2>主要特色</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; max-width: 800px; margin: 0 auto;">
+                <div class="feature-card">
+                    <div style="font-size: 40px;">📱</div>
+                    <div class="feature-title">響應式設計</div>
+                    <div class="feature-desc">自動適配各種螢幕尺寸</div>
+                </div>
+                <div class="feature-card">
+                    <div style="font-size: 40px;">👆</div>
+                    <div class="feature-title">手勢操作</div>
+                    <div class="feature-desc">滑動切換、下拉刷新</div>
+                </div>
+                <div class="feature-card">
+                    <div style="font-size: 40px;">⚡</div>
+                    <div class="feature-title">極速體驗</div>
+                    <div class="feature-desc">優化性能、快速響應</div>
+                </div>
+                <div class="feature-card">
+                    <div style="font-size: 40px;">🎨</div>
+                    <div class="feature-title">美觀介面</div>
+                    <div class="feature-desc">現代化設計、舒適體驗</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

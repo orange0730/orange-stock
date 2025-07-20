@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍊 Orange Stock Trading</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍊</text></svg>">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles-mobile.css">
+</head>
+<body>
+    <!-- 載入動畫 -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <div class="orange-spinner">🍊</div>
+            <p>載入中...</p>
+        </div>
+    </div>
+    
+    <!-- 資料持久性警告 -->
+    <div id="persistenceWarning" class="persistence-warning" style="display: none;">
+        <div class="warning-content">
+            <span class="warning-icon">⚠️</span>
+            <span class="warning-text">測試版本：資料可能在系統重啟後消失，請管理員定期備份！</span>
+            <button class="warning-close" onclick="this.parentElement.parentElement.style.display='none'">×</button>
+        </div>
+    </div>
+
+    <!-- 主要導航 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <span class="brand-icon">🍊</span>
+                <span class="brand-text">Orange Stock</span>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <div class="nav-user-info" id="navUserInfo" style="display: none;">
+                    <span class="user-points" id="navUserPoints">💰 0</span>
+                    <span class="user-name" id="navUserName">Guest</span>
+                    <button class="nav-btn admin-btn" id="adminPanelBtn" style="display: none;">🔧 管理面板</button>
+                    <button class="nav-btn" id="refreshBtn">🔄 刷新</button>
+                    <button class="nav-btn" id="stockInfoBtn">📊 股票信息</button>
+                    <button class="nav-btn" id="profileBtn">個人檔案</button>
+                    <button class="logout-btn" id="logoutBtn">登出</button>
+                </div>
+                <div class="nav-auth" id="navAuth">
+                    <button class="auth-btn" id="loginBtn">登入</button>
+                    <button class="auth-btn primary" id="registerBtn">註冊</button>
+                </div>
+            </div>
+            <div class="mobile-menu-toggle" id="mobileMenuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要內容 -->
+    <main class="main-content">
+        <!-- 歡迎區域 -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="hero-icon">🍊</span>
+                    歡迎來到 Orange Stock
+                </h1>
+                <p class="hero-subtitle">虛擬股票交易平台 • 用點數交易，體驗投資樂趣</p>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <span class="stat-value" id="heroCurrentPrice">$100.00</span>
+                        <span class="stat-label">當前股價</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="heroPriceChange">+0.00%</span>
+                        <span class="stat-label">24H變化</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="heroVolume">0</span>
+                        <span class="stat-label">交易量</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 認證區域 -->
+        <section class="auth-section" id="authSection">
+            <!-- 登入表單 -->
+            <div class="auth-form-container" id="loginForm" style="display: none;">
+                <div class="auth-form">
+                    <h2 class="auth-title">🔐 用戶登入</h2>
+                    <form id="loginFormElement">
+                        <div class="form-group">
+                            <label for="loginUsername">用戶名或電子郵件</label>
+                            <input type="text" id="loginUsername" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">密碼</label>
+                            <input type="password" id="loginPassword" required>
+                        </div>
+                        <button type="submit" class="form-submit-btn">登入</button>
+                        <p class="form-switch">
+                            還沒有帳號？<a href="#" id="switchToRegister">立即註冊</a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 註冊表單 -->
+            <div class="auth-form-container" id="registerForm" style="display: none;">
+                <div class="auth-form">
+                    <h2 class="auth-title">🎉 用戶註冊</h2>
+                    <form id="registerFormElement">
+                        <div class="form-group">
+                            <label for="registerUsername">用戶名</label>
+                            <input type="text" id="registerUsername" required minlength="3" maxlength="20">
+                        </div>
+                        <div class="form-group">
+                            <label for="registerEmail">電子郵件</label>
+                            <input type="email" id="registerEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="registerPassword">密碼</label>
+                            <input type="password" id="registerPassword" required minlength="6">
+                        </div>
+                        <button type="submit" class="form-submit-btn">註冊並獲得10000點數</button>
+                        <p class="form-switch">
+                            已有帳號？<a href="#" id="switchToLogin">立即登入</a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- 股票信息面板 -->
+        <section class="stock-info-section" id="stockInfoSection">
+            <div class="info-container">
+                <!-- 完整股票信息 -->
+                <div class="stock-details-card">
+                    <h3 class="card-title">🍊 Orange股票詳情</h3>
+                    <div class="stock-info-grid">
+                        <div class="info-row">
+                            <div class="info-item">
+                                <span class="info-label">當前價格</span>
+                                <span class="info-value primary" id="detailCurrentPrice">$100.00</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">平均價格</span>
+                                <span class="info-value" id="detailAvgPrice">$100.00</span>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-item">
+                                <span class="info-label">開盤價</span>
+                                <span class="info-value" id="detailOpenPrice">$100.00</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">漲跌幅</span>
+                                <span class="info-value" id="detailPriceChange">+0.00 (+0.00%)</span>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-item">
+                                <span class="info-label">今日最高</span>
+                                <span class="info-value" id="detailTodayHigh">$100.00</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">今日最低</span>
+                                <span class="info-value" id="detailTodayLow">$100.00</span>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-item">
+                                <span class="info-label">成交量</span>
+                                <span class="info-value" id="detailVolume">0 股</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">成交額</span>
+                                <span class="info-value" id="detailAmount">$0.00</span>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-item">
+                                <span class="info-label">成交筆數</span>
+                                <span class="info-value" id="detailTransCount">0 筆</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 五檔報價 -->
+                <div class="five-level-quotes-card">
+                    <h3 class="card-title">📊 五檔報價</h3>
+                    <div class="quotes-container">
+                        <div class="quotes-header">
+                            <span class="quote-label">買價</span>
+                            <span class="quote-label">數量</span>
+                            <span class="quote-label">賣價</span>
+                            <span class="quote-label">數量</span>
+                        </div>
+                        <div class="quotes-list" id="fiveLevelQuotes">
+                            <!-- 五檔報價將動態填充 -->
+                            <div class="quotes-loading">載入中...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 近期交易記錄 -->
+                <div class="recent-trades-card">
+                    <h3 class="card-title">📈 近期交易</h3>
+                    <div class="trades-container">
+                        <div class="trades-header">
+                            <span class="trade-label">時間</span>
+                            <span class="trade-label">價格</span>
+                            <span class="trade-label">數量</span>
+                            <span class="trade-label">類型</span>
+                        </div>
+                        <div class="trades-list" id="recentTradesList">
+                            <!-- 交易記錄將動態填充 -->
+                            <div class="trades-loading">載入中...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 點數排行榜 -->
+                <div class="rankings-card">
+                    <h3 class="card-title">🏆 點數排行榜</h3>
+                    <div class="rankings-container">
+                        <div class="rankings-header">
+                            <span class="rank-label">排名</span>
+                            <span class="rank-label">用戶</span>
+                            <span class="rank-label">總資產</span>
+                            <span class="rank-label">交易次數</span>
+                        </div>
+                        <div class="rankings-list" id="rankingsList">
+                            <!-- 排行榜將動態填充 -->
+                            <div class="rankings-loading">載入中...</div>
+                        </div>
+                        <div class="user-rank-info" id="userRankInfo" style="display: none;">
+                            <div class="user-rank-card">
+                                <span class="rank-text">我的排名：</span>
+                                <span class="rank-number" id="userRankNumber">-</span>
+                                <span class="rank-total">（總資產：<span id="userTotalValue">$0</span>）</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 交易區域 -->
+        <section class="trading-section" id="tradingSection" style="display: none;">
+            <div class="trading-container">
+                <!-- 股價圖表 -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">🍊 Orange 股價走勢</h3>
+                        <div class="chart-controls">
+                            <button class="period-btn active" data-period="1h">1小時</button>
+                            <button class="period-btn" data-period="24h">24小時</button>
+                            <button class="period-btn" data-period="7d">7天</button>
+                            <button class="period-btn" data-period="30d">30天</button>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="stockChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 交易面板 -->
+                <div class="trading-panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">💰 交易面板</h3>
+                        <div class="current-price">
+                            <span class="price-label">當前價格</span>
+                            <span class="price-value" id="currentPrice">$100.00</span>
+                        </div>
+                    </div>
+
+                    <!-- 用戶資產 -->
+                    <div class="user-portfolio">
+                        <div class="portfolio-item">
+                            <span class="portfolio-label">可用點數</span>
+                            <span class="portfolio-value" id="userPoints">10000</span>
+                        </div>
+                        <div class="portfolio-item">
+                            <span class="portfolio-label">持有股票</span>
+                            <span class="portfolio-value" id="userShares">0 股</span>
+                        </div>
+                        <div class="portfolio-item">
+                            <span class="portfolio-label">股票價值</span>
+                            <span class="portfolio-value" id="stockValue">$0.00</span>
+                        </div>
+                        <div class="portfolio-item">
+                            <span class="portfolio-label">總資產</span>
+                            <span class="portfolio-value total" id="totalValue">$10000.00</span>
+                        </div>
+                    </div>
+
+                    <!-- 交易按鈕 -->
+                    <div class="trading-buttons">
+                        <!-- 交易模式選擇 -->
+                        <div class="trade-mode-selector">
+                            <label class="mode-option">
+                                <input type="radio" name="tradeMode" value="market" checked>
+                                <span>🚀 市價交易</span>
+                            </label>
+                            <label class="mode-option">
+                                <input type="radio" name="tradeMode" value="limit">
+                                <span>⏰ 限價交易</span>
+                            </label>
+                        </div>
+
+                        <div class="trade-input-group">
+                            <label for="tradeQuantity">交易數量</label>
+                            <input type="number" id="tradeQuantity" min="1" value="1" placeholder="輸入股數">
+                        </div>
+
+                        <!-- 限價交易額外輸入 -->
+                        <div class="limit-price-input" id="limitPriceInput" style="display: none;">
+                            <label for="limitPrice">限價價格</label>
+                            <input type="number" id="limitPrice" step="0.01" placeholder="目標價格">
+                        </div>
+
+                        <div class="trade-buttons">
+                            <button class="trade-btn buy-btn" id="buyBtn">
+                                <span class="btn-icon">📈</span>
+                                <span class="btn-text" id="buyBtnText">買入</span>
+                                <span class="trade-cost" id="buyCost">$100.00</span>
+                            </button>
+                            <button class="trade-btn sell-btn" id="sellBtn">
+                                <span class="btn-icon">📉</span>
+                                <span class="btn-text" id="sellBtnText">賣出</span>
+                                <span class="trade-revenue" id="sellRevenue">$100.00</span>
+                            </button>
+                        </div>
+
+                        <!-- 價格影響設置按鈕 -->
+                        <div class="settings-section">
+                            <button class="settings-btn" id="priceSettingsBtn">⚙️ 價格影響設置</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 五檔報價 -->
+                <div class="order-book-container">
+                    <h3 class="section-title">📊 五檔報價</h3>
+                    <div class="order-book">
+                        <div class="order-book-header">
+                            <span>價格</span>
+                            <span>數量</span>
+                        </div>
+                        <div class="sell-orders" id="sellOrders">
+                            <div class="order-row sell">
+                                <span class="price">$10.50</span>
+                                <span class="quantity">100</span>
+                            </div>
+                            <div class="order-row sell">
+                                <span class="price">$10.40</span>
+                                <span class="quantity">200</span>
+                            </div>
+                            <div class="order-row sell">
+                                <span class="price">$10.30</span>
+                                <span class="quantity">150</span>
+                            </div>
+                            <div class="order-row sell">
+                                <span class="price">$10.20</span>
+                                <span class="quantity">300</span>
+                            </div>
+                            <div class="order-row sell">
+                                <span class="price">$10.10</span>
+                                <span class="quantity">250</span>
+                            </div>
+                        </div>
+                        <div class="current-price-bar">
+                            <span class="current-label">當前價格</span>
+                            <span class="current-value" id="orderBookPrice">$10.00</span>
+                        </div>
+                        <div class="buy-orders" id="buyOrders">
+                            <div class="order-row buy">
+                                <span class="price">$9.90</span>
+                                <span class="quantity">180</span>
+                            </div>
+                            <div class="order-row buy">
+                                <span class="price">$9.80</span>
+                                <span class="quantity">220</span>
+                            </div>
+                            <div class="order-row buy">
+                                <span class="price">$9.70</span>
+                                <span class="quantity">280</span>
+                            </div>
+                            <div class="order-row buy">
+                                <span class="price">$9.60</span>
+                                <span class="quantity">350</span>
+                            </div>
+                            <div class="order-row buy">
+                                <span class="price">$9.50</span>
+                                <span class="quantity">400</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 成交紀錄 -->
+                <div class="recent-trades-container">
+                    <h3 class="section-title">📈 成交紀錄</h3>
+                    <div class="recent-trades-list" id="recentTradesList">
+                        <div class="trade-record">
+                            <span class="trade-time">10:30:45</span>
+                            <span class="trade-price buy">$10.05</span>
+                            <span class="trade-quantity">50</span>
+                            <span class="trade-type buy">買入</span>
+                        </div>
+                        <div class="trade-record">
+                            <span class="trade-time">10:30:32</span>
+                            <span class="trade-price sell">$9.95</span>
+                            <span class="trade-quantity">30</span>
+                            <span class="trade-type sell">賣出</span>
+                        </div>
+                        <div class="trade-record">
+                            <span class="trade-time">10:30:15</span>
+                            <span class="trade-price buy">$10.00</span>
+                            <span class="trade-quantity">100</span>
+                            <span class="trade-type buy">買入</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 交易歷史 -->
+                <div class="transaction-history">
+                    <h3 class="history-title">📊 交易歷史</h3>
+                    <div class="history-list" id="transactionHistory">
+                        <div class="history-empty">
+                            <span class="empty-icon">📝</span>
+                            <p>還沒有交易記錄</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 個人檔案區域 -->
+        <section class="profile-section" id="profileSection" style="display: none;">
+            <div class="profile-container">
+                <div class="profile-header">
+                    <h2 class="profile-title">👤 個人檔案</h2>
+                    <button class="close-profile-btn" id="closeProfileBtn">×</button>
+                </div>
+                
+                <div class="profile-content">
+                    <!-- 用戶信息 -->
+                    <div class="user-info-card">
+                        <h3>基本信息</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">用戶名</span>
+                                <span class="info-value" id="profileUsername">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">註冊時間</span>
+                                <span class="info-value" id="profileJoinDate">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">最後登入</span>
+                                <span class="info-value" id="profileLastLogin">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 資產統計 -->
+                    <div class="assets-card">
+                        <h3>資產統計</h3>
+                        <div class="assets-grid">
+                            <div class="asset-item">
+                                <span class="asset-label">當前點數</span>
+                                <span class="asset-value" id="profilePoints">0</span>
+                            </div>
+                            <div class="asset-item">
+                                <span class="asset-label">持有股票</span>
+                                <span class="asset-value" id="profileShares">0 股</span>
+                            </div>
+                            <div class="asset-item">
+                                <span class="asset-label">股票價值</span>
+                                <span class="asset-value" id="profileStockValue">$0.00</span>
+                            </div>
+                            <div class="asset-item">
+                                <span class="asset-label">總資產</span>
+                                <span class="asset-value total" id="profileTotalValue">$0.00</span>
+                            </div>
+                            <div class="asset-item">
+                                <span class="asset-label">總收益</span>
+                                <span class="asset-value" id="profileProfitLoss">$0.00</span>
+                            </div>
+                            <div class="asset-item">
+                                <span class="asset-label">收益率</span>
+                                <span class="asset-value" id="profileProfitRate">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 交易統計 -->
+                    <div class="trading-stats-card">
+                        <h3>交易統計</h3>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span class="stat-label">總交易次數</span>
+                                <span class="stat-value" id="totalTrades">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">買入次數</span>
+                                <span class="stat-value" id="buyTrades">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">賣出次數</span>
+                                <span class="stat-value" id="sellTrades">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">平均買入價</span>
+                                <span class="stat-value" id="avgBuyPrice">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 限價單管理 -->
+                    <div class="limit-orders-card">
+                        <h3>限價單管理</h3>
+                        <div class="limit-order-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>交易類型</label>
+                                    <select id="limitOrderType">
+                                        <option value="buy">買入</option>
+                                        <option value="sell">賣出</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>數量</label>
+                                    <input type="number" id="limitOrderQuantity" min="1" placeholder="股數">
+                                </div>
+                                <div class="form-group">
+                                    <label>限價</label>
+                                    <input type="number" id="limitOrderPrice" step="0.01" placeholder="目標價格">
+                                </div>
+                                <button class="limit-order-btn" id="createLimitOrderBtn">創建限價單</button>
+                            </div>
+                        </div>
+                        
+                        <div class="active-orders">
+                            <h4>活躍限價單</h4>
+                            <div class="orders-list" id="limitOrdersList">
+                                <div class="orders-empty">
+                                    <span class="empty-icon">📋</span>
+                                    <p>目前沒有活躍的限價單</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 詳細交易歷史 -->
+                    <div class="detailed-history-card">
+                        <h3>詳細交易歷史</h3>
+                        <div class="history-filters">
+                            <select id="historyFilter">
+                                <option value="all">全部交易</option>
+                                <option value="buy">買入記錄</option>
+                                <option value="sell">賣出記錄</option>
+                            </select>
+                            <select id="historyPeriod">
+                                <option value="7d">最近7天</option>
+                                <option value="30d">最近30天</option>
+                                <option value="all">全部時間</option>
+                            </select>
+                        </div>
+                        <div class="detailed-history-list" id="detailedHistoryList">
+                            <div class="history-loading">載入中...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 價格影響設置彈窗 -->
+        <div class="modal-overlay" id="priceSettingsModal" style="display: none;">
+            <div class="modal-content price-settings-modal">
+                <div class="modal-header">
+                    <h2>⚙️ 價格影響設置</h2>
+                    <button class="modal-close-btn" id="closePriceSettingsBtn">×</button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="settings-info">
+                        <p>📊 調整交易對股價波動的影響程度</p>
+                    </div>
+                    
+                    <div class="settings-form">
+                        <div class="setting-group">
+                            <label for="buyImpactMultiplier">買入影響倍數</label>
+                            <div class="input-with-info">
+                                <input type="range" id="buyImpactMultiplier" min="0.1" max="2.0" step="0.1" value="0.5">
+                                <span class="value-display" id="buyImpactValue">0.5</span>
+                            </div>
+                            <small>數值越大，買入時價格上漲越多</small>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="sellImpactMultiplier">賣出影響倍數</label>
+                            <div class="input-with-info">
+                                <input type="range" id="sellImpactMultiplier" min="0.1" max="2.0" step="0.1" value="0.5">
+                                <span class="value-display" id="sellImpactValue">0.5</span>
+                            </div>
+                            <small>數值越大，賣出時價格下跌越多</small>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="volumeDecayFactor">量級衰減因子</label>
+                            <div class="input-with-info">
+                                <input type="range" id="volumeDecayFactor" min="500" max="2000" step="100" value="1000">
+                                <span class="value-display" id="volumeDecayValue">1000</span>
+                            </div>
+                            <small>數值越大，大量交易對價格的影響越小</small>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="randomFluctuation">隨機波動幅度</label>
+                            <div class="input-with-info">
+                                <input type="range" id="randomFluctuation" min="0.01" max="0.05" step="0.005" value="0.02">
+                                <span class="value-display" id="randomFluctuationValue">2.0%</span>
+                            </div>
+                            <small>隨機價格波動的最大幅度</small>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-buttons">
+                        <button class="btn-secondary" id="resetSettingsBtn">重置預設</button>
+                        <button class="btn-primary" id="saveSettingsBtn">保存設置</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 管理員面板 -->
+        <section class="admin-panel-section" id="adminPanelSection" style="display: none;">
+            <div class="admin-container">
+                <div class="admin-header">
+                    <h2 class="admin-title">🔧 管理員控制面板</h2>
+                    <button class="close-admin-btn" id="closeAdminBtn">×</button>
+                </div>
+                
+                <div class="admin-tabs">
+                    <button class="admin-tab active" data-tab="stats">📊 系統統計</button>
+                    <button class="admin-tab" data-tab="users">👥 用戶管理</button>
+                    <button class="admin-tab" data-tab="settings">⚙️ 系統設置</button>
+                    <button class="admin-tab" data-tab="control">🎛️ 股價控制</button>
+                </div>
+
+                <!-- 系統統計 -->
+                <div class="admin-tab-content active" id="adminTabStats">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>用戶統計</h3>
+                            <div class="stat-item">
+                                <span class="stat-label">總用戶數</span>
+                                <span class="stat-value" id="totalUsers">-</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">管理員數</span>
+                                <span class="stat-value" id="adminUsers">-</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">今日新用戶</span>
+                                <span class="stat-value" id="newUsersToday">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <h3>交易統計</h3>
+                            <div class="stat-item">
+                                <span class="stat-label">總交易數</span>
+                                <span class="stat-value" id="totalTrades">-</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">今日交易</span>
+                                <span class="stat-value" id="tradesToday">-</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">總交易額</span>
+                                <span class="stat-value" id="totalVolume">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <h3>股票信息</h3>
+                            <div class="stat-item">
+                                <span class="stat-label">當前價格</span>
+                                <span class="stat-value" id="adminCurrentPrice">-</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">24小時最高</span>
+                                <span class="stat-value" id="admin24hHigh">-</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">24小時最低</span>
+                                <span class="stat-value" id="admin24hLow">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 用戶管理 -->
+                <div class="admin-tab-content" id="adminTabUsers">
+                    <div class="users-controls">
+                        <button class="admin-action-btn" id="refreshUsersBtn">🔄 刷新用戶列表</button>
+                    </div>
+                    <div class="users-table-container">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>用戶名</th>
+                                    <th>郵箱</th>
+                                    <th>角色</th>
+                                    <th>點數</th>
+                                    <th>股票</th>
+                                    <th>交易次數</th>
+                                    <th>註冊時間</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr>
+                                    <td colspan="9" class="loading-row">載入中...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 系統設置 -->
+                <div class="admin-tab-content" id="adminTabSettings">
+                    <div class="settings-section">
+                        <h3>系統參數設置</h3>
+                        <div class="settings-list" id="adminSettingsList">
+                            <div class="loading-settings">載入中...</div>
+                        </div>
+                        <button class="admin-action-btn" id="saveAllSettingsBtn">💾 保存所有設置</button>
+                    </div>
+                    
+                    <div class="backup-section">
+                        <h3>💾 數據備份與還原</h3>
+                        <div class="backup-warning">
+                            <p>⚠️ <strong>重要提醒</strong>：由於部署在 Google Cloud Run，資料會在容器重啟後丟失。請定期備份重要數據！</p>
+                        </div>
+                        <div class="backup-actions">
+                            <button class="admin-action-btn" id="exportDataBtn">📥 導出數據備份</button>
+                            <button class="admin-action-btn" id="importDataBtn">📤 導入數據還原</button>
+                            <input type="file" id="importFileInput" accept=".json" style="display: none;">
+                        </div>
+                        <div class="backup-stats" id="backupStats" style="display: none;">
+                            <h4>數據庫統計</h4>
+                            <div class="stats-info" id="dbStatsInfo"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="danger-zone">
+                        <h3>⚠️ 危險操作區域</h3>
+                        <div class="danger-actions">
+                            <button class="danger-btn" id="resetPricesBtn">重置股價歷史</button>
+                            <button class="danger-btn" id="resetTradesBtn">重置交易記錄</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 股價控制 -->
+                <div class="admin-tab-content" id="adminTabControl">
+                    <div class="price-control-section">
+                        <h3>手動股價調整</h3>
+                        <div class="price-adjust-form">
+                            <div class="form-group">
+                                <label for="newStockPrice">新股價</label>
+                                <input type="number" id="newStockPrice" step="0.01" min="0.01" placeholder="輸入新價格">
+                            </div>
+                            <div class="form-group">
+                                <label for="adjustReason">調整原因</label>
+                                <input type="text" id="adjustReason" placeholder="調整原因（可選）">
+                            </div>
+                            <button class="admin-action-btn" id="adjustPriceBtn">🎯 調整股價</button>
+                        </div>
+                        
+                        <div class="current-price-display">
+                            <span class="price-label">當前股價：</span>
+                            <span class="price-value" id="controlCurrentPrice">$10.00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="price-impact-control">
+                        <h3>價格影響參數控制</h3>
+                        <button class="admin-action-btn" id="openPriceImpactBtn">📊 打開價格影響設置</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 通知系統 -->
+    <div id="notification" class="notification"></div>
+
+    <!-- 連線狀態指示器 -->
+    <div class="connection-status" id="connectionStatus">
+        <span class="status-dot"></span>
+        <span class="status-text">已連接</span>
+    </div>
+
+    <!-- 手機版底部導航 -->
+    <nav class="mobile-bottom-nav" id="mobileBottomNav">
+        <a href="#" class="bottom-nav-item active" data-section="trading">
+            <span class="bottom-nav-icon">📈</span>
+            <span class="bottom-nav-label">交易</span>
+        </a>
+        <a href="#" class="bottom-nav-item" data-section="stockInfo">
+            <span class="bottom-nav-icon">📊</span>
+            <span class="bottom-nav-label">行情</span>
+        </a>
+        <a href="#" class="bottom-nav-item" data-section="portfolio">
+            <span class="bottom-nav-icon">💼</span>
+            <span class="bottom-nav-label">持倉</span>
+        </a>
+        <a href="#" class="bottom-nav-item" data-section="profile">
+            <span class="bottom-nav-icon">👤</span>
+            <span class="bottom-nav-label">我的</span>
+        </a>
+    </nav>
+
+    <script src="app.js"></script>
+    <script src="mobile-enhancements.js"></script>
+</body>
+</html> 

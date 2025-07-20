@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: orange-trade
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: singapore
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+    disk:
+      name: orange-data
+      mountPath: /app/data
+      sizeGB: 1 
